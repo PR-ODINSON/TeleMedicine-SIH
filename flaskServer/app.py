@@ -584,7 +584,7 @@ def chat_stream():
             headers={
                 'Cache-Control': 'no-cache',
                 'Connection': 'keep-alive',
-                'Access-Control-Allow-Origin': 'http://localhost:5173',
+                'Access-Control-Allow-Origin': 'https://tele-medicine-sih-b6xz.vercel.app',
                 'Access-Control-Allow-Credentials': 'true',
                 'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
                 'Content-Type': 'text/plain; charset=utf-8'
