@@ -204,7 +204,7 @@ except:
     print("Text-to-speech engine not available")
 
 # Google Gemini API Key from environment variables or fallback
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'AIzaSyDlpNK9Csn0h-B5YHWM3LU2W3o6wJGlda0')
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'AIzaSyBfPSGg0u0Bx9JiUvt_CyK7n-nKD8_MWO0')
 if not GEMINI_API_KEY:
     raise ValueError("GEMINI_API_KEY not found in environment variables and no fallback available.")
 
