@@ -24,7 +24,7 @@ import io
 app = Flask(__name__)
 # Configure CORS to allow credentials and specific origins
 CORS(app, 
-     origins=['http://localhost:5173', 'https://telemedicine-sih-frontend.vercel.app'],
+     origins=['http://localhost:5173', 'https://tele-medicine-sih-b6xz.vercel.app'],
      supports_credentials=True,
      allow_headers=['Content-Type', 'Authorization', 'Accept'],
      methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
