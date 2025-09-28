@@ -314,8 +314,21 @@ const DoctorsList: React.FC = () => {
   };
 
   const handleBookingSuccess = (appointmentId: string) => {
-    alert(`Appointment booked successfully! Appointment ID: ${appointmentId}`);
-    // You could navigate to appointments page or show a success message
+    // Show success toast
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+    toast.textContent = 'Appointment booked successfully!';
+    document.body.appendChild(toast);
+    
+    // Remove toast after 3 seconds
+    setTimeout(() => {
+      document.body.removeChild(toast);
+    }, 3000);
+    
+    // Redirect to appointments page
+    setTimeout(() => {
+      navigate('/patient/appointments');
+    }, 1000);
   };
 
   const startVideoCall = async (doctor: Doctor) => {
@@ -504,12 +517,11 @@ const DoctorsList: React.FC = () => {
                 
                 {/* Action Button */}
                 <button
-                  onClick={() => startVideoCall(doctor)}
-                  disabled={isCallingDoctor === doctor.doctorId}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm font-medium"
+                  onClick={() => openBookingModal(doctor)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-300 text-sm font-medium"
                 >
-                  <FaVideo className="text-sm" />
-                  {isCallingDoctor === doctor.doctorId ? 'Calling...' : 'Start Video Call'}
+                  <FaCalendar className="text-sm" />
+                  Book Appointment
                 </button>
               </div>
             </div>

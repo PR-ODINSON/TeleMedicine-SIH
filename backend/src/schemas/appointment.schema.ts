@@ -46,6 +46,9 @@ export class Appointment {
   @Prop()
   consultationFee?: number;
 
+  @Prop()
+  fees?: number;
+
   @Prop({ 
     enum: ['Pending', 'Paid', 'Failed'], 
     default: 'Pending' 

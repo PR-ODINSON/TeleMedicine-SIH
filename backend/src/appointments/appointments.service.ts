@@ -13,7 +13,13 @@ export class AppointmentsService {
   ) {}
 
   async create(createAppointmentDto: CreateAppointmentDto): Promise<Appointment> {
-    const appointment = new this.appointmentModel(createAppointmentDto);
+    // If status is 'Confirmed', set payment status to 'Paid'
+    const appointmentData = {
+      ...createAppointmentDto,
+      paymentStatus: createAppointmentDto.status === 'Confirmed' ? 'Paid' : 'Pending'
+    };
+    
+    const appointment = new this.appointmentModel(appointmentData);
     const savedAppointment = await appointment.save();
     
     // Create notifications for both doctor and patient
@@ -169,6 +175,26 @@ export class AppointmentsService {
   async update(id: string, updateAppointmentDto: UpdateAppointmentDto): Promise<Appointment> {
     const appointment = await this.appointmentModel
       .findByIdAndUpdate(id, updateAppointmentDto, { new: true })
+      .populate('doctor', '-password')
+      .populate('patient', '-password')
+      .exec();
+    
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found');
+    }
+    return appointment;
+  }
+
+  async cancel(id: string, cancelReason?: string): Promise<Appointment> {
+    const appointment = await this.appointmentModel
+      .findByIdAndUpdate(
+        id, 
+        { 
+          status: 'Canceled', 
+          cancelReason: cancelReason || 'Cancelled by patient' 
+        }, 
+        { new: true }
+      )
       .populate('doctor', '-password')
       .populate('patient', '-password')
       .exec();
