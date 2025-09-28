@@ -20,7 +20,7 @@ interface Appointment {
 
 const Appointments: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'upcoming' | 'completed' | 'all'>('upcoming');
+  const [activeTab, setActiveTab] = useState<'upcoming' | 'completed' | 'all'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'Online' | 'In-Person'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'doctor' | 'specialization'>('date');
@@ -229,26 +229,7 @@ const Appointments: React.FC = () => {
                     <option value="specialization">Sort by Specialty</option>
                   </select>
                 </div>
-              </div>
-
-              {/* Action Buttons and Stats */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                {/* Book New Appointment Button */}
-                <button
-                  onClick={handleBookAppointment}
-                  className="bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-2xl font-semibold transition-all duration-300 hover:bg-white/30 hover:scale-105 border border-white/30 flex items-center gap-3 shadow-lg"
-                >
-                  <FaPlus className="w-5 h-5" />
-                  Book New Appointment
-                </button>
-
-                {/* Stats */}
-                <div className="flex gap-4 text-white/90 text-sm">
-                  <span>Total: {appointments.length}</span>
-                  <span>•</span>
-                  <span>Filtered: {filteredAppointments.length}</span>
-                </div>
-              </div>
+              </div>              
             </div>
           </div>
         </section>
@@ -257,9 +238,9 @@ const Appointments: React.FC = () => {
         <div className="mb-8">
           <div className="flex space-x-1 bg-white/80 backdrop-blur-sm p-1 rounded-2xl w-fit shadow-lg border border-emerald-100">
             {[
+              { key: 'all', label: 'All', count: appointments.length },
               { key: 'upcoming', label: 'Upcoming', count: appointments.filter(a => a.status === 'Upcoming').length },
               { key: 'completed', label: 'Completed', count: appointments.filter(a => a.status === 'Completed').length },
-              { key: 'all', label: 'All', count: appointments.length }
             ].map((tab) => (
               <button
                 key={tab.key}

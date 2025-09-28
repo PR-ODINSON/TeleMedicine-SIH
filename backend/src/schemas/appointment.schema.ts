@@ -30,13 +30,9 @@ export class Appointment {
   notes?: string;
 
   @Prop({ 
-    enum: ['Online', 'In-Person'], 
     default: 'Online' 
   })
   type: string;
-
-  @Prop()
-  meetingLink?: string;
 
   @Prop()
   prescription?: string;
