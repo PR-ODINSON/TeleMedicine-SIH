@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import Sidebar from '../../Components/Sidebar'
 import AppointmentBooking from '../../Components/AppointmentBooking'
 import { FaSearch, FaFilter, FaStar, FaClock, FaVideo, FaMapPin, FaCalendar, FaUser, FaStethoscope, FaHeart, FaPhone, FaEnvelope, FaUserMd } from 'react-icons/fa'
+import { FaUserDoctor } from "react-icons/fa6";
 import axios from 'axios'
 import { getNotificationService } from '../../utils/real-time-notifications'
 import { VideoCallService, initializeVideoCallService } from '../../utils/video-call'
@@ -67,6 +68,10 @@ const DoctorsList: React.FC = () => {
   const [isCallingDoctor, setIsCallingDoctor] = useState<string | null>(null);
   const [showVideoCallModal, setShowVideoCallModal] = useState(false);
   const [callStatus, setCallStatus] = useState<'idle' | 'requesting' | 'waiting' | 'accepted' | 'rejected'>('idle');
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [doctorsPerPage] = useState(6);
 
   useEffect(() => {
     fetchDoctors();
@@ -79,6 +84,11 @@ const DoctorsList: React.FC = () => {
       }
     };
   }, []);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedSpecialization]);
 
   const initializeVideoCall = async () => {
     try {
@@ -258,20 +268,30 @@ const DoctorsList: React.FC = () => {
 
   const filteredDoctors = doctors
     .filter(doctor => 
-      doctor.fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.specialization.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.location.toLowerCase().includes(searchTerm.toLowerCase())
+      // Only search by doctor name
+      doctor.fullname.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .filter(doctor => 
       selectedSpecialization === 'all' || doctor.specialization === selectedSpecialization
     )
     .sort((a, b) => {
+      // If specialization is selected, sort by experience in decreasing order
+      if (selectedSpecialization !== 'all') {
+        return (b.experience || 0) - (a.experience || 0);
+      }
+      // Default sorting
       if (sortBy === 'rating') return (b.rating || 0) - (a.rating || 0);
       if (sortBy === 'experience') return (b.experience || 0) - (a.experience || 0);
       if (sortBy === 'fee') return (a.consultationFee || 0) - (b.consultationFee || 0);
       if (sortBy === 'name') return a.fullname.localeCompare(b.fullname);
       return 0;
     });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredDoctors.length / doctorsPerPage);
+  const startIndex = (currentPage - 1) * doctorsPerPage;
+  const endIndex = startIndex + doctorsPerPage;
+  const currentDoctors = filteredDoctors.slice(startIndex, endIndex);
 
   const openModal = (doctor: Doctor) => {
     setSelectedDoctor(doctor);
@@ -294,8 +314,21 @@ const DoctorsList: React.FC = () => {
   };
 
   const handleBookingSuccess = (appointmentId: string) => {
-    alert(`Appointment booked successfully! Appointment ID: ${appointmentId}`);
-    // You could navigate to appointments page or show a success message
+    // Show success toast
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+    toast.textContent = 'Appointment booked successfully!';
+    document.body.appendChild(toast);
+    
+    // Remove toast after 3 seconds
+    setTimeout(() => {
+      document.body.removeChild(toast);
+    }, 3000);
+    
+    // Redirect to appointments page
+    setTimeout(() => {
+      navigate('/patient/appointments');
+    }, 1000);
   };
 
   const startVideoCall = async (doctor: Doctor) => {
@@ -382,153 +415,172 @@ const DoctorsList: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
       <Sidebar />
-      <main className="lg:ml-80 p-4 lg:p-8 xl:p-12 overflow-y-auto min-h-screen">
-        <div className="">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">Find Your Doctor</h1>
-          <p className="text-gray-600 mb-8">Connect with verified healthcare professionals</p>
+      <main className="lg:ml-80 p-4 lg:p-6 overflow-y-auto min-h-screen">
+        {/* Header Section - My Appointments */}
+        <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-2xl p-8 mb-8 relative overflow-hidden">
+          {/* Background decorative circles */}
+          <div className="absolute top-0 left-0 w-32 h-32 bg-green-200/20 rounded-full -translate-x-16 -translate-y-16"></div>
+          <div className="absolute bottom-0 right-0 w-24 h-24 bg-green-200/20 rounded-full translate-x-12 translate-y-12"></div>
+          
+          <div className="relative z-10">
+            {/* Title with Calendar Icon */}
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-16 h-16 bg-teal-300 rounded-full flex items-center justify-center">
+                <FaUserDoctor className="text-2xl text-white" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold text-white mb-1">Doctors Lists</h1>
+                <p className="text-teal-100 text-lg">Browse and connect with top doctors for your healthcare needs</p>
+              </div>
+            </div>
 
-          {/* Search and Filter Section */}
-          <div className="bg-emerald-100/30 backdrop-blur-sm p-8 rounded-2xl shadow-lg mb-8">
-            <div className="flex flex-col lg:flex-row gap-6">
+            {/* Search and Filter Section */}
+            <div className="flex flex-col lg:flex-row gap-4 items-center">
               {/* Search Bar */}
               <div className="relative flex-1">
-                <FaSearch className="absolute left-4 top-1/2 z-50 transform -translate-y-1/2 text-emerald-500" />
                 <input
                   type="text"
-                  placeholder="Search by doctor name, specialization, or hospital..."
-                  className="bg-transparent w-full pl-12 pr-4 py-4 rounded-2xl border border-emerald-300 text-gray-800 placeholder-emerald-500 outline-emerald-700 transition-all duration-300 text-lg"
+                  placeholder="Search by doctor name..."
+                  className="w-full px-6 py-4 rounded-full bg-white/90 backdrop-blur-sm border-0 text-gray-800 placeholder-gray-500 outline-none transition-all duration-300 text-lg shadow-lg"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               
-              {/* Filter Button */}
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 px-6 py-4 bg-emerald-600 text-white rounded-2xl hover:bg-emerald-700 transition-all duration-300 shadow-lg"
-              >
-                <FaFilter />
-                Filters
-              </button>
-            </div>
-            
-            {/* Filters Panel */}
-            {showFilters && (
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Specialization Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Specialization</label>
-              <select
-                value={selectedSpecialization}
-                onChange={(e) => setSelectedSpecialization(e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-              >
-                {specializations.map(spec => (
-                  <option key={spec} value={spec}>
-                    {spec === 'all' ? 'All Specializations' : spec}
-                  </option>
-                ))}
-              </select>
-                  </div>
-              
-                  {/* Sort By */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-              <select
-                value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value as any)}
-                      className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                    >
-                      <option value="rating">Highest Rated</option>
-                      <option value="experience">Most Experience</option>
-                      <option value="fee">Lowest Fee</option>
-                      <option value="name">Name (A-Z)</option>
-              </select>
-                  </div>
-
-                  {/* Results Count */}
-                  <div className="flex items-center">
-                    <div className="text-sm text-gray-600">
-                      Showing {filteredDoctors.length} of {doctors.length} doctors
+              {/* Specialization Dropdown */}
+              <div className="flex gap-3">
+                <select
+                  value={selectedSpecialization}
+                  onChange={(e) => setSelectedSpecialization(e.target.value)}
+                  className="px-4 py-3 bg-white/20 backdrop-blur-sm text-white rounded-full border-0 outline-none transition-all duration-300 appearance-none cursor-pointer"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                    backgroundPosition: 'right 12px center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: '16px',
+                    paddingRight: '40px'
+                  }}
+                >
+                  <option value="all" className="text-gray-800">All Types</option>
+                  {specializations.filter(spec => spec !== 'all').map(spec => (
+                    <option key={spec} value={spec} className="text-gray-800">
+                      {spec}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
-              </div>
-            )}
         </div>
 
-          {/* Doctors Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-            {filteredDoctors.map((doctor) => (
-              <div key={doctor.id} className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-                      <div className="relative">
-                        <img
-                          src={doctor.image}
-                          alt={doctor.name}
-                    className="w-full h-64 object-cover"
-                  />
-                  </div>
-
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">{doctor.fullname}</h3>
-                  <p className="text-emerald-600 font-medium mb-2">{doctor.specialization}</p>
-                  
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="flex items-center gap-1">
-                      <FaStar className="text-yellow-500" />
-                      <span className="text-sm font-medium">{doctor.rating || 4.5}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <FaUser className="text-gray-400" />
-                      <span className="text-sm text-gray-600">{doctor.totalRatings || 0}+ ratings</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2">
-                      <FaStethoscope className="text-gray-400" />
-                      <span className="text-sm text-gray-600">{doctor.experience || 0} years experience</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <FaMapPin className="text-gray-400" />
-                      <span className="text-sm text-gray-600">{doctor.location}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-2xl font-bold text-emerald-600">₹{doctor.consultationFee || 100}</span>
-                        <span className="text-sm text-gray-500"> /consultation</span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => startVideoCall(doctor)}
-                        disabled={isCallingDoctor === doctor.doctorId}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm"
-                      >
-                        <FaVideo className="text-xs" />
-                        {isCallingDoctor === doctor.doctorId ? 'Calling...' : 'Start Video Call'}
-                      </button>
-                    </div>
+        {/* Doctors Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {currentDoctors.map((doctor) => (
+            <div key={doctor.id} className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02]">
+              {/* Profile Section */}
+              <div className="p-6 text-center">
+                {/* Profile Avatar */}
+                <div className="relative mx-auto mb-4">
+                  <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center shadow-lg">
+                    <FaUserDoctor className="text-3xl text-white" />
                   </div>
                 </div>
+                
+                {/* Doctor Info */}
+                <h3 className="text-lg font-bold text-gray-800 mb-1">{doctor.fullname}</h3>
+                <p className="text-emerald-600 font-medium text-sm mb-3">{doctor.specialization}</p>
+                
+                {/* Rating */}
+                <div className="flex items-center justify-center gap-1 mb-3">
+                  <FaStar className="text-yellow-500 text-sm" />
+                  <span className="text-sm font-medium text-gray-700">{doctor.rating || 4.5}</span>
+                  <span className="text-xs text-gray-500">({doctor.totalRatings || 0}+ ratings)</span>
+                </div>
+                
+                {/* Experience */}
+                <div className="flex items-center justify-center gap-1 mb-3">
+                  <FaStethoscope className="text-gray-400 text-sm" />
+                  <span className="text-sm text-gray-600">{doctor.experience || 0} years experience</span>
+                </div>
+                
+                {/* Location */}
+                <div className="flex items-center justify-center gap-1 mb-4">
+                  <FaMapPin className="text-gray-400 text-sm" />
+                  <span className="text-sm text-gray-600 truncate">{doctor.location}</span>
+                </div>
+                
+                {/* Fee */}
+                <div className="mb-4">
+                  <span className="text-xl font-bold text-emerald-600">₹{doctor.consultationFee || 100}</span>
+                  <span className="text-sm text-gray-500"> /consultation</span>
+                </div>
+                
+                {/* Action Button */}
+                <button
+                  onClick={() => openBookingModal(doctor)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-300 text-sm font-medium"
+                >
+                  <FaCalendar className="text-sm" />
+                  Book Appointment
+                </button>
+              </div>
             </div>
           ))}
         </div>
 
         {/* Empty State */}
-          {filteredDoctors.length === 0 && !loading && (
+        {filteredDoctors.length === 0 && !loading && (
           <div className="text-center py-16">
-              <FaUserMd className="mx-auto text-6xl text-gray-300 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-600 mb-2">No doctors found</h3>
-              <p className="text-gray-500">Try adjusting your search criteria or filters</p>
-            </div>
-          )}
-        </div>
+            <FaUserMd className="mx-auto text-6xl text-gray-300 mb-4" />
+            <h3 className="text-xl font-semibold text-gray-600 mb-2">No doctors found</h3>
+            <p className="text-gray-500">Try adjusting your search criteria or filters</p>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {filteredDoctors.length > 0 && totalPages > 1 && (
+          <div className="flex justify-center items-center mt-8 space-x-2">
+            {/* Previous Button */}
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              Previous
+            </button>
+
+            {/* Page Numbers */}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                  currentPage === page
+                    ? 'bg-emerald-600 text-white shadow-md'
+                    : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+
+            {/* Next Button */}
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              Next
+            </button>
+          </div>
+        )}
+
+        {/* Results Info */}
+        {filteredDoctors.length > 0 && (
+          <div className="text-center mt-4 text-sm text-gray-600">
+            Showing {startIndex + 1}-{Math.min(endIndex, filteredDoctors.length)} of {filteredDoctors.length} doctors
+          </div>
+        )}
 
         {/* Doctor Detail Modal */}
         {isModalOpen && selectedDoctor && (

@@ -24,7 +24,8 @@ import io
 app = Flask(__name__)
 # Configure CORS to allow credentials and specific origins
 CORS(app, 
-     origins=['https://tele-medicine-sih-b6xz.vercel.app'],
+    #  origins=['https://tele-medicine-sih-b6xz.vercel.app'],
+     origins=['http://localhost:5173'],
      supports_credentials=True,
      allow_headers=['Content-Type', 'Authorization', 'Accept'],
      methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
@@ -584,7 +585,7 @@ def chat_stream():
             headers={
                 'Cache-Control': 'no-cache',
                 'Connection': 'keep-alive',
-                'Access-Control-Allow-Origin': 'https://tele-medicine-sih-b6xz.vercel.app',
+                'Access-Control-Allow-Origin': 'http://localhost:5173',
                 'Access-Control-Allow-Credentials': 'true',
                 'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
                 'Content-Type': 'text/plain; charset=utf-8'

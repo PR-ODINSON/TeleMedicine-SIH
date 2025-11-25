@@ -30,13 +30,9 @@ export class Appointment {
   notes?: string;
 
   @Prop({ 
-    enum: ['Online', 'In-Person'], 
     default: 'Online' 
   })
   type: string;
-
-  @Prop()
-  meetingLink?: string;
 
   @Prop()
   prescription?: string;
@@ -49,6 +45,9 @@ export class Appointment {
 
   @Prop()
   consultationFee?: number;
+
+  @Prop()
+  fees?: number;
 
   @Prop({ 
     enum: ['Pending', 'Paid', 'Failed'], 

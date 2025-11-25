@@ -71,6 +71,11 @@ export class AppointmentsController {
     return this.appointmentsService.update(id, updateAppointmentDto);
   }
 
+  @Patch(':id/cancel')
+  cancel(@Param('id') id: string, @Body() body: { cancelReason?: string }) {
+    return this.appointmentsService.cancel(id, body.cancelReason);
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.appointmentsService.remove(id);
